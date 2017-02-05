@@ -39,8 +39,8 @@ public class CameraManager {
 
     private CameraListener cameraListener;
 
-    private static ISDKInterface service
-            ;
+    private static ISDKInterface service;
+
     private static ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceDisconnected(ComponentName name) {
@@ -54,41 +54,6 @@ public class CameraManager {
             Log.d(LOG_TAG,  " Connected to service");
         }
     };
-
-    public interface CameraListener {
-        void onImageCreate(Bitmap result);
-
-        void onError(String error);
-    }
-
-    public CameraManager(Activity activity) {
-        this.activity = activity;
-    }
-
-    public void start(FrameLayout anchor, int overlayResource) {
-        this.anchor = anchor;
-        this.overlay = overlayResource;
-        anchor.removeAllViews();
-        initCamera();
-        anchor.addView(cameraPreview);
-        intent = new Intent(activity, OverlayService.class);
-        intent.putExtra(OVERLAY, overlay);
-
-        activity.bindService(intent, connection, Context.BIND_NOT_FOREGROUND);
-        activity.startService(intent);
-    }
-
-    public void stop() {
-        activity.stopService(intent);
-    }
-
-    public void takePicture() {
-        camera.takePicture(null, null, myPictureCallback_JPG);
-    }
-
-    public void setCameraListener(CameraListener listener) {
-        cameraListener = listener;
-    }
 
     private Camera.PictureCallback myPictureCallback_JPG = new Camera.PictureCallback(){
 
@@ -105,6 +70,60 @@ public class CameraManager {
                 cameraListener.onImageCreate(result);
         }
     };
+
+    /**
+     * Interface to received the callbacks from the manager
+     */
+    public interface CameraListener {
+        void onImageCreate(Bitmap result);
+
+        void onError(String error);
+    }
+
+    public CameraManager(Activity activity) {
+        this.activity = activity;
+    }
+
+    /**
+     * Start the camera and the preview
+     * @param anchor The FrameLayout where the camera image will be added
+     * @param overlayResource The resource Id of the overlay image
+     */
+    public void start(FrameLayout anchor, int overlayResource) {
+        this.anchor = anchor;
+        this.overlay = overlayResource;
+        anchor.removeAllViews();
+        initCamera();
+        anchor.addView(cameraPreview);
+        intent = new Intent(activity, OverlayService.class);
+        intent.putExtra(OVERLAY, overlay);
+
+        activity.bindService(intent, connection, Context.BIND_NOT_FOREGROUND);
+        activity.startService(intent);
+    }
+
+    /**
+     * Stop the camera manager
+     */
+    public void stop() {
+        activity.stopService(intent);
+    }
+
+    /**
+     * Take the picture when desired
+     */
+    public void takePicture() {
+        camera.takePicture(null, null, myPictureCallback_JPG);
+    }
+
+    /**
+     * Set the Camera listener
+     * @see CameraListener
+     * @param listener
+     */
+    public void setCameraListener(CameraListener listener) {
+        cameraListener = listener;
+    }
 
     /**
      * Rotate the bitmap image on the desired orientation.
@@ -220,22 +239,24 @@ public class CameraManager {
         return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA);
     }
 
+    /**
+     * Merge the two bitmap
+     * @param original The original bitmap (from the camera)
+     * @param overlay The overlay bitmap (from drawables)
+     * @return The merged bitmap
+     */
     private Bitmap overlay(Bitmap original, Bitmap overlay) {
         Bitmap bmOverlay = Bitmap.createBitmap(original.getWidth(), original.getHeight(), original.getConfig());
         Canvas canvas = new Canvas(bmOverlay);
         canvas.drawBitmap(original, new Matrix(), null);
 
         Log.v(LOG_TAG, "Overlay width: " + overlay.getWidth() + " height: " + overlay.getHeight());
-        int centerX = overlay.getHeight() / 2;
-        int centerY = (original.getWidth() - overlay.getHeight()) / 2;
         overlay = getResizedBitmap(overlay, original.getWidth() - overlay.getHeight());
 
         try {
             Coordinates coordinates = service.getCoordinates();
             Log.d(LOG_TAG, "X: " + coordinates.getX() + " Y: " + coordinates.getY());
-            int left = centerX + coordinates.getX();
-            int top = centerY + coordinates.getY();
-            Log.d(LOG_TAG, "left: " + left + " top: " + top);
+
             canvas.drawBitmap(overlay, coordinates.getX(), coordinates.getY(), null);
 
         } catch (RemoteException e) {
