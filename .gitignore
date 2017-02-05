@@ -1,0 +1,25 @@
+.gradle
+local.properties
+.idea/workspace.xml
+.DS_Store
+.idea/.name
+.idea/gradle.xml
+.idea/misc.xml
+.idea/vcs.xml
+.idea/copyright
+.idea/runConfigurations.xml
+build/
+bin/
+gen/
+
+com_crashlytics_export_strings.xml
+
+# User-specific configurations
+.idea/libraries/
+.idea/tasks.xml
+.idea/compiler.xml
+.idea/encodings.xml
+.idea/modules.xml
+.idea/scopes/scope_settings.xml
+*.iml
+
